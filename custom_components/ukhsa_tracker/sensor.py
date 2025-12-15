@@ -8,10 +8,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import DOMAIN
 
 # --- Sensor Definition List ---
-# Key: The key used to store the data in the coordinator (from __init__.py)
-# Name: The display name of the sensor
-# Unit: The unit of measurement
-# Icon: The MDI icon for the sensor
 SENSOR_TYPES = [
 	{
 		"key": "covid_admissions_rate",

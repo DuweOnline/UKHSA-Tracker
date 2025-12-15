@@ -9,10 +9,11 @@ class UkhsaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 	async def async_step_user(self, user_input=None):
 		"""Handle the initial step."""
-		# This will create a single instance of the integration.
+		# Check if an entry already exists, as we only need one.
 		if self._async_current_entries():
 			return self.async_abort(reason="single_instance_allowed")
 
+		# Create the configuration entry, which triggers the setup in __init__.py
 		return self.async_create_entry(title="UKHSA Respiratory Tracker", data={})
 
 	def _async_current_entries(self):

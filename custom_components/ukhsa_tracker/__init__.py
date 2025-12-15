@@ -14,14 +14,14 @@ _LOGGER = logging.getLogger(__name__)
 DOMAIN = "ukhsa_tracker"
 PLATFORMS = ["sensor"]
 
-# The UKHSA API updates weekly, usually around Thursday/Friday.
-# We will check daily (24 hours) to catch the update.
+# The UKHSA API updates weekly, so we check daily.
 UPDATE_INTERVAL = timedelta(hours=24) 
 
 class UkhsaApi:
 	"""Class to handle API fetching from UKHSA."""
 	def __init__(self):
 		"""Initialize the API client."""
+		# Base URL structured for Nation (England) and variable topic/metric
 		self.base_url = "https://api.ukhsa-dashboard.data.gov.uk/themes/infectious_disease/sub_themes/respiratory/topics/{topic}/geography_types/Nation/geographies/England/metrics/{metric}"
 
 	def get_data(self, topic: str, metric: str):
@@ -30,6 +30,7 @@ class UkhsaApi:
 		_LOGGER.debug("Fetching data from: %s", url)
 
 		try:
+			# Add a timeout for robustness
 			response = requests.get(url, timeout=30)
 			response.raise_for_status()
 			data = response.json()
@@ -50,9 +51,9 @@ class UkhsaApi:
 		return None
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-	"""Set up the Ukhsa Tracker from a config entry (dummy entry for API data)."""
+	"""Set up the Ukhsa Tracker from a config entry."""
 	
-	# Store the API client and coordinator in HA data for sensor.py to use
+	# Store the API client and coordinator in HA data
 	if DOMAIN not in hass.data:
 		hass.data[DOMAIN] = {}
 
@@ -64,18 +65,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 		
 		data = {}
 		
-		# 1. COVID-19 Data
+		# 1. COVID-19 Data (Hospital Admissions Rate)
 		data["covid_admissions_rate"] = await hass.async_add_executor_job(
 			api.get_data, "COVID-19", "weekly_hospital_admissions_rate"
 		)
 		
-		# 2. Influenza Data
+		# 2. Influenza Data (Hospital Admissions Rate)
 		data["flu_admissions_rate"] = await hass.async_add_executor_job(
 			api.get_data, "Influenza", "weekly_hospital_admissions_rate"
 		)
 		
-		# 3. Rhinovirus (Cold) Data
-		# Note: Rhinovirus positivity is found under the 'OtherRespiratoryViruses' topic
+		# 3. Rhinovirus (Cold) Data (Lab Positivity)
 		data["rhinovirus_positivity"] = await hass.async_add_executor_job(
 			api.get_data, "OtherRespiratoryViruses", "rhinovirus_positive_count"
 		)
