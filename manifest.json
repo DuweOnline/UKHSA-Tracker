@@ -1,0 +1,15 @@
+{
+  "domain": "ukhsa_tracker",
+  "name": "UKHSA Respiratory Tracker",
+  "version": "1.0.0",
+  "codeowners": [
+	"@DuweOnline"
+  ],
+  "config_flow": false,
+  "dependencies": [],
+  "documentation": "https://github.com/your_github_username/ukhsa_tracker",
+  "iot_class": "cloud_polling",
+  "requirements": [
+	"requests"
+  ]
+}
