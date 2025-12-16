@@ -60,25 +60,39 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 	api = UkhsaApi()
 	
 	async def async_update_data():
-		"""Fetch data from the API and store it."""
+		"""Fetch data from the API and store it, handling partial failures."""
 		_LOGGER.info("Starting UKHSA data update")
 		
 		data = {}
 		
 		# 1. COVID-19 Data (Hospital Admissions Rate)
-		data["covid_admissions_rate"] = await hass.async_add_executor_job(
-			api.get_data, "COVID-19", "weekly_hospital_admissions_rate"
-		)
+		try:
+			data["covid_admissions_rate"] = await hass.async_add_executor_job(
+				api.get_data, "COVID-19", "weekly_hospital_admissions_rate"
+			)
+		except UpdateFailed as err:
+			_LOGGER.warning("Failed to fetch COVID-19 data: %s", err)
 		
 		# 2. Influenza Data (Hospital Admissions Rate)
-		data["flu_admissions_rate"] = await hass.async_add_executor_job(
-			api.get_data, "Influenza", "weekly_hospital_admissions_rate"
-		)
+		try:
+			data["flu_admissions_rate"] = await hass.async_add_executor_job(
+				api.get_data, "Influenza", "weekly_hospital_admissions_rate"
+			)
+		except UpdateFailed as err:
+			_LOGGER.warning("Failed to fetch Influenza data: %s", err)
 		
 		# 3. Rhinovirus (Cold) Data (Lab Positivity)
-		data["rhinovirus_positivity"] = await hass.async_add_executor_job(
-			api.get_data, "OtherRespiratoryViruses", "rhinovirus_positive_count"
-		)
+		try:
+			data["rhinovirus_positivity"] = await hass.async_add_executor_job(
+				api.get_data, "OtherRespiratoryViruses", "rhinovirus_positive_count"
+			)
+		except UpdateFailed as err:
+			_LOGGER.warning("Failed to fetch Rhinovirus data: %s", err)
+
+		# Crucial check: If ALL fetches failed, raise UpdateFailed to mark integration unhealthy.
+		if not any(data.values()):
+			_LOGGER.error("All UKHSA data fetches failed.")
+			raise UpdateFailed("All UKHSA data fetches failed.")
 		
 		return data
 

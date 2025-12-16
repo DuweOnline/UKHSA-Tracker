@@ -2,7 +2,7 @@
 
 """Platform for sensor entities."""
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
-from homeassistant.const import PERCENTAGE, UnitOfDataRate
+from homeassistant.const import PERCENTAGE # Removed UnitOfDataRate
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import DOMAIN
@@ -12,13 +12,13 @@ SENSOR_TYPES = [
 	{
 		"key": "covid_admissions_rate",
 		"name": "COVID-19 Hospital Admissions Rate",
-		"unit": UnitOfDataRate.PER_100K_POPULATION,
+		"unit": "per 100k pop", # <-- Corrected to a string
 		"icon": "mdi:hospital-box-outline",
 	},
 	{
 		"key": "flu_admissions_rate",
 		"name": "Influenza Hospital Admissions Rate",
-		"unit": UnitOfDataRate.PER_100K_POPULATION,
+		"unit": "per 100k pop", # <-- Corrected to a string
 		"icon": "mdi:thermometer-high",
 	},
 	{
@@ -73,10 +73,23 @@ class UkhsaSensor(CoordinatorEntity, SensorEntity):
 		if data and data.get("value") is not None:
 			# For percentage (e.g., Rhinovirus), convert to a roundable float
 			if self._attr_unit_of_measurement == PERCENTAGE:
-				return round(float(data["value"]), 1)
+				# Use a safe conversion to float, then round to 1 decimal place
+				try:
+					return round(float(data["value"]), 1)
+				except (ValueError, TypeError):
+					_LOGGER.warning(
+						"Rhinovirus value '%s' could not be converted to a number.", data["value"]
+					)
+					return None
 			
 			# For rates, ensure it is a float
-			return float(data["value"])
+			try:
+				return float(data["value"])
+			except (ValueError, TypeError):
+				_LOGGER.warning(
+					"Rate value '%s' for key %s could not be converted to a number.", data["value"], self._key
+				)
+				return None
 			
 		return None
 
